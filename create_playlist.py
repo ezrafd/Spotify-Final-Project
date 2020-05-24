@@ -11,17 +11,13 @@ from secrets import spotify_user_id, spotify_token
 class CreatePlaylist:
 
     def __init__(self):
-        self.all_song_info = {}
-
-    def get_artists(self):
         pass
 
-    def check_new(self, artist_ids):
-        for artist_id in artist_ids:
-            query = "https://api.spotify.com/v1/artists/{id}/albums".format(artist_id)
+    def get_artists(self, artists):
+        for artist in artists:
+            query = "https://api.spotify.com/v1/search?q={artist}&type=artist&limit=1".format(artist)
             response = requests.post(
                 query,
-                data=request_body,
                 headers={
                     "Content-Type": "application/json",
                     "Authorization": "Bearer {}".format(spotify_token)
@@ -30,21 +26,50 @@ class CreatePlaylist:
 
             response_json = response.json()
             albums = response_json['albums']['items']['id']
+
+    def check_new(self, artist_ids):
+        albums = self.find_albums(artist_ids)
+        new_albums = self.check_release_date(albums)
+
+    def find_albums(self, artist_ids):
+        albums = []
+        for artist_id in artist_ids:
+            query = "https://api.spotify.com/v1/artists/{id}/albums".format(artist_id)
+            response = requests.post(
+                query,
+                headers={
+                    "Content-Type": "application/json",
+                    "Authorization": "Bearer {}".format(spotify_token)
+                }
+            )
+
+            response_json = response.json()
+            artist_albums = response_json['albums']['items']['id']
+            albums += artist_albums
             #Cut ['id']?
 
-            for album_id in albums:
-                query = "https://api.spotify.com/v1/albums/{id}".format(album_id)
-                response = requests.post(
-                    query,
-                    data=request_body,
-                    headers={
-                        "Content-Type": "application/json",
-                        "Authorization": "Bearer {}".format(spotify_token)
-                    }
-                )
+        return albums
 
-                response_json = response.json()
-                albums = response_json['albums']['items']
+    def check_release_date(self, albums, cutoff):
+        for album_id in albums:
+            query = "https://api.spotify.com/v1/albums/{id}".format(album_id)
+            response = requests.post(
+                query,
+                headers={
+                    "Content-Type": "application/json",
+                    "Authorization": "Bearer {}".format(spotify_token)
+                }
+            )
+
+            response_json = response.json()
+            album_release_dates = response_json['release_date']
+
+            new_albums = []
+            for i, date in enumerate(album_release_dates):
+                if date >= cutoff:
+                    new_albums.append(albums[i])
+
+        return new_albums
 
     def create_playlist(self):
 
