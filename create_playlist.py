@@ -10,7 +10,7 @@ from secrets import spotify_user_id, spotify_token
 
 def main():
     cp = CreatePlaylist()
-    cp.get_artists(['Gunna'])
+    cp.get_artists(['Gunna', 'KYLE'])
 
 
 class CreatePlaylist:
