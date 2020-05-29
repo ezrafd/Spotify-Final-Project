@@ -45,7 +45,7 @@ class CreatePlaylist:
         albums = []
         for artist_id in artist_ids:
             query = "https://api.spotify.com/v1/artists/{id}/albums".format(id=artist_id)
-            response = requests.post(
+            response = requests.get(
                 query,
                 headers={
                     "Content-Type": "application/json",
@@ -54,16 +54,15 @@ class CreatePlaylist:
             )
 
             response_json = response.json()
-            artist_albums = response_json['albums']['items']['id']
+            artist_albums = response_json['items'][0]['id']
             albums += artist_albums
-            #Cut ['id']?
 
         return albums
 
     def check_release_date(self, albums, cutoff):
         for album_id in albums:
             query = "https://api.spotify.com/v1/albums/{id}".format(id=album_id)
-            response = requests.post(
+            response = requests.get(
                 query,
                 headers={
                     "Content-Type": "application/json",
