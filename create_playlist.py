@@ -10,7 +10,8 @@ from secrets import spotify_user_id, spotify_token
 
 def main():
     cp = CreatePlaylist()
-    cp.get_artists(['Gunna', 'KYLE'])
+    artist_ids = cp.get_artists(['Gunna', 'KYLE'])
+    cp.check_new(artist_ids)
 
 
 class CreatePlaylist:
@@ -32,11 +33,13 @@ class CreatePlaylist:
 
             response_json = response.json()
             print(response_json)
-            #artist_ids.append(response_json['id'])
+            artist_ids.append(response_json['artists']['items'][0]['id'])
+        return artist_ids
 
     def check_new(self, artist_ids):
         albums = self.find_albums(artist_ids)
         new_albums = self.check_release_date(albums)
+        return new_albums
 
     def find_albums(self, artist_ids):
         albums = []
