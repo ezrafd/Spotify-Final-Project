@@ -11,15 +11,17 @@ import datetime
 import time
 
 def main():
-    cp = CreatePlaylist()
+    cp = CreatePlaylist('2020-05-15')
     artist_ids = cp.get_artists(['Gunna', 'Polo G'])
-    cp.check_new(artist_ids)
+    new = cp.check_new(artist_ids)
+
+    #cp.create_playlist()
 
 
 class CreatePlaylist:
 
-    def __init__(self):
-        pass
+    def __init__(self, cutoff_date):
+        self.cutoff_date = datetime.datetime.strptime(cutoff_date, '%Y-%m-%d')
 
     def get_artists(self, artists):
         artist_ids = []
@@ -39,10 +41,8 @@ class CreatePlaylist:
         return artist_ids
 
     def check_new(self, artist_ids):
-        cutoff = datetime.datetime(2020, 5, 15)
         albums = self.find_albums(artist_ids)
-        print(albums)
-        new_albums = self.check_release_date(albums, cutoff)
+        new_albums = self.check_release_date(albums, self.cutoff_date)
         return new_albums
 
     def find_albums(self, artist_ids):
@@ -85,7 +85,6 @@ class CreatePlaylist:
         for i, date in enumerate(album_release_dates):
             if date >= cutoff:
                 new_albums.append(albums[i])
-                print(albums[i])
 
         return new_albums
 
