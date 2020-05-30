@@ -7,10 +7,12 @@
 import json
 import requests
 from secrets import spotify_user_id, spotify_token
+import datetime
+import time
 
 def main():
     cp = CreatePlaylist()
-    artist_ids = cp.get_artists(['Gunna', 'KYLE'])
+    artist_ids = cp.get_artists(['Gunna', 'Polo G'])
     cp.check_new(artist_ids)
 
 
@@ -37,8 +39,10 @@ class CreatePlaylist:
         return artist_ids
 
     def check_new(self, artist_ids):
+        cutoff = datetime.datetime(2020, 5, 15)
         albums = self.find_albums(artist_ids)
-        new_albums = self.check_release_date(albums)
+        print(albums)
+        new_albums = self.check_release_date(albums, cutoff)
         return new_albums
 
     def find_albums(self, artist_ids):
@@ -54,12 +58,15 @@ class CreatePlaylist:
             )
 
             response_json = response.json()
-            artist_albums = response_json['items'][0]['id']
-            albums += artist_albums
+            print(response_json)
+            for i in range(len(response_json['items'])):
+                artist_albums = response_json['items'][i]['id']
+                albums.append(artist_albums)
 
         return albums
 
     def check_release_date(self, albums, cutoff):
+        album_release_dates = []
         for album_id in albums:
             query = "https://api.spotify.com/v1/albums/{id}".format(id=album_id)
             response = requests.get(
@@ -71,12 +78,14 @@ class CreatePlaylist:
             )
 
             response_json = response.json()
-            album_release_dates = response_json['release_date']
+            rd = datetime.datetime.strptime(response_json['release_date'], '%Y-%m-%d')
+            album_release_dates.append(rd)
 
-            new_albums = []
-            for i, date in enumerate(album_release_dates):
-                if date >= cutoff:
-                    new_albums.append(albums[i])
+        new_albums = []
+        for i, date in enumerate(album_release_dates):
+            if date >= cutoff:
+                new_albums.append(albums[i])
+                print(albums[i])
 
         return new_albums
 
