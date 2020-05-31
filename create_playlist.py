@@ -14,8 +14,9 @@ def main():
     cp = CreatePlaylist('2020-05-15')
     artist_ids = cp.get_artists(['Gunna', 'Polo G'])
     new = cp.check_new(artist_ids)
-
-    #cp.create_playlist()
+    playlist = cp.create_playlist()
+    songs = cp.get_songs(new)
+    cp.add_songs(playlist, songs)
 
 
 class CreatePlaylist:
@@ -36,7 +37,6 @@ class CreatePlaylist:
             )
 
             response_json = response.json()
-            print(response_json)
             artist_ids.append(response_json['artists']['items'][0]['id'])
         return artist_ids
 
@@ -58,7 +58,6 @@ class CreatePlaylist:
             )
 
             response_json = response.json()
-            print(response_json)
             for i in range(len(response_json['items'])):
                 artist_albums = response_json['items'][i]['id']
                 albums.append(artist_albums)
@@ -110,8 +109,49 @@ class CreatePlaylist:
 
         return response_json['id']
 
-    def add_songs(self):
-        pass
+    def get_songs(self, new_albums):
+        songs = []
+        for album_id in new_albums:
+            query = "https://api.spotify.com/v1/albums/{id}/tracks".format(id=album_id)
+            response = requests.get(
+                query,
+                headers={
+                    "Content-Type": "application/json",
+                    "Authorization": "Bearer {}".format(spotify_token)
+                }
+            )
+
+            response_json = response.json()
+            print(response_json)
+            for i in range(len(response_json['items'])):
+                uri = response_json['items'][i]['uri']
+                songs.append(uri)
+
+        print(songs)
+        return songs
+
+    def add_songs(self, playlist, songs):
+        # add all songs into new playlist
+        request_data = json.dumps(songs)
+
+        query = "https://api.spotify.com/v1/playlists/{}/tracks".format(playlist)
+
+        response = requests.post(
+            query,
+            data=request_data,
+            headers={
+                "Content-Type": "application/json",
+                "Authorization": "Bearer {}".format(spotify_token)
+            }
+        )
+
+        # check for valid response status
+        if response.status_code != 200:
+            raise ResponseException(response.status_code)
+
+        response_json = response.json()
+        return response_json
+
 
 if __name__ == '__main__':
     main()
