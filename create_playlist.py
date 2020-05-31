@@ -11,8 +11,8 @@ import datetime
 import time
 
 def main():
-    cp = CreatePlaylist('2020-05-15')
-    artist_ids = cp.get_artists(['Gunna', 'Polo G'])
+    cp = CreatePlaylist(['Polo G'], '2020-05-15')
+    artist_ids = cp.get_artists()
     new = cp.check_new(artist_ids)
     playlist = cp.create_playlist()
     songs = cp.get_songs(new)
@@ -21,12 +21,13 @@ def main():
 
 class CreatePlaylist:
 
-    def __init__(self, cutoff_date):
+    def __init__(self, artist_names, cutoff_date):
         self.cutoff_date = datetime.datetime.strptime(cutoff_date, '%Y-%m-%d')
+        self.artists = artist_names
 
-    def get_artists(self, artists):
+    def get_artists(self):
         artist_ids = []
-        for artist in artists:
+        for artist in self.artists:
             query = "https://api.spotify.com/v1/search?q={artist}&type=artist&limit=1".format(artist=artist)
             response = requests.get(
                 query,
@@ -88,10 +89,12 @@ class CreatePlaylist:
         return new_albums
 
     def create_playlist(self):
+        artist_names = ", ".join(self.artists)
+        print(artist_names)
 
         request_body = json.dumps({
             "name": "Personalized New Music Playlist",
-            "description": "New music from YOUR artists.",
+            "description": "New music from YOUR artists: {}".format(artist_names),
             "public": False
         })
 
@@ -111,6 +114,7 @@ class CreatePlaylist:
 
     def get_songs(self, new_albums):
         songs = []
+        song_names = []
         for album_id in new_albums:
             query = "https://api.spotify.com/v1/albums/{id}/tracks".format(id=album_id)
             response = requests.get(
@@ -122,12 +126,16 @@ class CreatePlaylist:
             )
 
             response_json = response.json()
-            print(response_json)
+
             for i in range(len(response_json['items'])):
+                if response_json['items'][i]['name'] in song_names:
+                    break
+
+                song_names.append(response_json['items'][i]['name'])
+
                 uri = response_json['items'][i]['uri']
                 songs.append(uri)
 
-        print(songs)
         return songs
 
     def add_songs(self, playlist, songs):
@@ -144,10 +152,6 @@ class CreatePlaylist:
                 "Authorization": "Bearer {}".format(spotify_token)
             }
         )
-
-        # check for valid response status
-        if response.status_code != 200:
-            raise ResponseException(response.status_code)
 
         response_json = response.json()
         return response_json
