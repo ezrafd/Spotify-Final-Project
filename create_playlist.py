@@ -8,10 +8,9 @@ import json
 import requests
 from secrets import spotify_user_id, spotify_token
 import datetime
-import time
 
 def main():
-    cp = CreatePlaylist(['Polo G'], '2020-05-15')
+    cp = CreatePlaylist(['Polo G', 'Lil Durk'], '2020-01-01')
     artist_ids = cp.get_artists()
     new = cp.check_new(artist_ids)
     playlist = cp.create_playlist()
@@ -59,9 +58,12 @@ class CreatePlaylist:
             )
 
             response_json = response.json()
+            print(response_json)
             for i in range(len(response_json['items'])):
                 artist_albums = response_json['items'][i]['id']
                 albums.append(artist_albums)
+
+
 
         return albums
 
@@ -90,7 +92,6 @@ class CreatePlaylist:
 
     def create_playlist(self):
         artist_names = ", ".join(self.artists)
-        print(artist_names)
 
         request_body = json.dumps({
             "name": "Personalized New Music Playlist",
@@ -131,10 +132,13 @@ class CreatePlaylist:
                 if response_json['items'][i]['name'] in song_names:
                     break
 
-                song_names.append(response_json['items'][i]['name'])
-
-                uri = response_json['items'][i]['uri']
-                songs.append(uri)
+                for artist in self.artists:
+                    for j in range(len(response_json['items'][i]['artists'])):
+                        if artist == response_json['items'][i]['artists'][j]['name'] and \
+                                response_json['items'][i]['name'] not in song_names:
+                            uri = response_json['items'][i]['uri']
+                            songs.append(uri)
+                            song_names.append(response_json['items'][i]['name'])
 
         return songs
 
